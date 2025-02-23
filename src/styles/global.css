@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@fontsource/libre-baskerville";
+@theme {
+  --font-sans: "libre-baskerville", "sans-serif";
+}
