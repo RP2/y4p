@@ -1,5 +1,35 @@
 ---
 import Layout from "../layouts/Layout.astro";
+
+export const repeatText = async (
+  text: string,
+  imageSize: { width: number; height: number },
+): Promise<string> => {
+  // Calculate the required length based on image dimensions
+  const requiredLength = imageSize.width * imageSize.height;
+  while (text.length < requiredLength) {
+    text += " ";
+    text += text;
+  }
+  // If the input text is empty, return early with an ellipsis if needed
+  if (text === "") {
+    return "...";
+  }
+  // Calculate how many times we need to repeat the text
+  const repetitions = Math.ceil(requiredLength / text.length);
+  // Create the extended string by repeating the text enough times
+  let extendedText = text.repeat(repetitions);
+  // Truncate if necessary and add ellipsis
+  if (extendedText.length > requiredLength) {
+    extendedText = `${extendedText.slice(0, -3)}...`;
+  }
+  return extendedText;
+};
+
+// Example usage
+const imageSize = { width: 20, height: 30 }; // Total length needed: 600
+const text = "Hello";
+const result = await repeatText(text, imageSize);
 ---
 
 <Layout
@@ -8,4 +38,5 @@ import Layout from "../layouts/Layout.astro";
   description="This is y4p, a wall of text that reveals an image when highlighted"
 >
   <h1>hello</h1>
+  <p class="w-[75ch]">{result}</p>
 </Layout>
