@@ -7,12 +7,14 @@ import Layout from "../layouts/Layout.astro";
   tags="wall of text, text highlight, image"
   description="This is y4p, a wall of text that reveals an image when highlighted"
 >
-  <p
+  <main
     id="textContainer"
-    class="font-mono text-xs m-0 p-4 w-fit max-w-full whitespace-pre-wrap break-keep leading-3 text-neutral-700 t"
+    class="font-mono text-xs m-0 p-4 w-fit max-w-full whitespace-pre-wrap break-keep leading-3 text-neutral-700"
   >
-    Loading...
-  </p>
+    <p>Loading...</p><p class="absolute bottom-0 left-1/2 pb-4">
+      made by Riley
+    </p>
+  </main>
 </Layout>
 
 <script>
@@ -23,6 +25,8 @@ import Layout from "../layouts/Layout.astro";
   import myImage from "../images/russell-ferrer-xI8DyoYh5_g-unsplash.jpg";
   // Wikipedia article: https://en.wikipedia.org/wiki/Ancient_Roman_philosophy
   const philosophyText = `Interest in philosophy was first excited at Rome in 155 BC, by an Athenian embassy consisting of the Academic skeptic Carneades, the Stoic Diogenes of Babylon, and the Peripatetic Critolaus. Roman philosophy was heavily influenced by Hellenistic philosophy; however, unique developments in philosophical schools of thought occurred during the Roman period as well, with many philosophers adapting teachings from more than one school. Both leading schools of law of the Roman period, the Sabinian and the Proculean Schools, drew their ethical views from readings on the Stoics and Epicureans respectively, allowing for the competition between thought to manifest in a new field in Rome's jurisprudence. During the autocratic rule of the Flavian dynasty, a group of philosophers vocally and politically protested against imperial actions, particularly under Domitian and Vespasian. This resulted in Vespasian banishing all philosophers from Rome, save for Gaius Musonius Rufus; although he, too, was later banished. This event later became known as the Stoic Opposition, as a majority of the protesting philosophers were Stoics. Later in the Roman period, Stoics came to regard this opposition highly; however, the term "Stoic Opposition" was not coined until the 19th century, where it first appears in the writings of Gaston Boissier. While philosophy was often admired by jurists and aristocrats, of the emperors the affinity that Hadrian held for philosophy stands out, a feature that was likely amplified by his philhellenism. Hadrian was recorded to have attended lectures by Epictetus and Favorinus on his tours of Greece, and invested heavily in attempting to revive Athens as a cultural center in the ancient world through methods of central planning on his part. Hadrian held philosophy in high regard, something unusual for Roman emperors, who were often indifferent, if not oppositional to it as a practice. These sentiments in favor of philosophy were also shared by the emperors Nero, Julian the Apostate, and Marcus Aurelius—the latter two of whom are now considered as philosophers. Later, with the spread of Christianity inside the Roman Empire, came the Christian philosophy of Saint Augustine of Hippo. One of the last philosophical writers of antiquity was Boethius, whose writings are the chief source of information as to Greek philosophy during the first centuries of the Middle Ages. During this time Athens declined as an intellectual center of thought while new sites such as Alexandria and Rome hosted a variety of philosophical discussion, such as commentary on the works of Aristotle.`;
+
+  console.log("this works best in a Chrome browser, unfortunately.");
 
   // Clean up the text by removing extra whitespace and normalizing spaces
   const cleanText = (text: string): string => {
@@ -35,7 +39,7 @@ import Layout from "../layouts/Layout.astro";
   async function init() {
     // Calculate target width based on viewport height
     const calculateTargetWidth = () => {
-      const vh = window.innerHeight * 0.9;
+      const vh = window.innerHeight * 1.25;
       const fontSize = 12;
       const charHeight = fontSize;
       return Math.floor(vh / charHeight);
@@ -59,6 +63,39 @@ import Layout from "../layouts/Layout.astro";
 
     // Update the container with the generated text
     document.getElementById("textContainer")!.innerHTML = result;
+
+    // Preload selection styles
+    requestAnimationFrame(() => {
+      const container = document.getElementById("textContainer")!;
+      const preloadDiv = container.querySelector("[data-preload]");
+
+      if (preloadDiv) {
+        const spans = Array.from(preloadDiv.getElementsByTagName("span"));
+        const sampleSize = Math.min(200, spans.length);
+        const step = Math.floor(spans.length / sampleSize);
+
+        const preloadSpan = (span: HTMLSpanElement) => {
+          const styles = window.getComputedStyle(span, "::selection");
+          void styles.getPropertyValue("color");
+          void styles.getPropertyValue("background-color");
+        };
+
+        const processChunk = (startIndex: number) => {
+          const endIndex = Math.min(startIndex + 50, spans.length);
+
+          spans
+            .slice(startIndex, endIndex)
+            .filter((_, index) => index % step === 0)
+            .forEach(preloadSpan);
+
+          if (endIndex < spans.length) {
+            requestAnimationFrame(() => processChunk(endIndex));
+          }
+        };
+
+        processChunk(0);
+      }
+    });
   }
 
   // Add resize handler to update width when window is resized

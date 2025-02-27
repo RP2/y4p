@@ -85,5 +85,6 @@ export const repeatText = async (
     }
   }
 
-  return rows.join("\n");
+  // Modified return to include a wrapper div with data attribute for style preloading
+  return `<p data-preload="true">${rows.join("\n")}</p>`;
 };
