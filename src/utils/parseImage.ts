@@ -1,47 +1,65 @@
-import { getImage } from "astro:assets";
 import type { ImageData, Pixel } from "./interfaces";
 
 export const getImageData = async (
-  imagePath: ImageMetadata,
+  imagePath: string, // Change to string type since we're using direct path
   targetWidth: number,
 ): Promise<ImageData> => {
   if (typeof window === "undefined") {
-    const pixels = Array(targetWidth * targetWidth).fill({ r: 0, g: 0, b: 0 });
-    return { pixels, width: targetWidth, height: targetWidth };
+    return {
+      pixels: Array(targetWidth * targetWidth).fill({ r: 0, g: 0, b: 0 }),
+      width: targetWidth,
+      height: targetWidth,
+    };
   }
 
   try {
-    // Pre-optimize image with better quality settings
-    const optimizedImage = await getImage({
-      src: imagePath,
-      width: targetWidth * 2, // Double width for better downsampling
-      format: "webp",
-      quality: "high",
-    });
+    const img = await createImage(imagePath);
 
-    // Create and load image
-    const img = await createImage(optimizedImage.src);
-
-    // Calculate dimensions once
+    // Increase sampling resolution
+    const scaleFactor = window.devicePixelRatio || 1;
+    const sampledWidth = targetWidth * scaleFactor;
     const aspectRatio = img.height / img.width;
-    const targetHeight = Math.floor(targetWidth * aspectRatio);
-    const totalPixels = targetWidth * targetHeight;
+    const sampledHeight = Math.floor(sampledWidth * aspectRatio);
 
-    // Create optimized canvas
+    // Create high-res canvas for better sampling
     const { canvas, context } = createOptimizedCanvas(
-      targetWidth,
-      targetHeight,
+      sampledWidth,
+      sampledHeight,
     );
 
-    // Draw image with high quality settings
+    // Enable high-quality image rendering
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
-    context.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-    // Get image data in one operation
-    const { data } = context.getImageData(0, 0, targetWidth, targetHeight);
+    // Draw at higher resolution
+    context.drawImage(img, 0, 0, sampledWidth, sampledHeight);
+
+    // Scale back down to target size with better quality
+    const finalCanvas = createOptimizedCanvas(
+      targetWidth,
+      Math.floor(targetWidth * aspectRatio),
+    );
+    const finalContext = finalCanvas.context;
+    finalContext.imageSmoothingEnabled = true;
+    finalContext.imageSmoothingQuality = "high";
+    finalContext.drawImage(
+      canvas,
+      0,
+      0,
+      targetWidth,
+      Math.floor(targetWidth * aspectRatio),
+    );
+
+    // Get final image data
+    const { data } = finalContext.getImageData(
+      0,
+      0,
+      targetWidth,
+      Math.floor(targetWidth * aspectRatio),
+    );
 
     // Pre-allocate pixels array for better performance
+    const totalPixels = targetWidth * Math.floor(targetWidth * aspectRatio);
     const pixels = new Array<Pixel>(totalPixels);
 
     // Process pixels in single loop for better performance
@@ -54,10 +72,14 @@ export const getImageData = async (
       };
     }
 
-    return { pixels, width: targetWidth, height: targetHeight };
+    return {
+      pixels,
+      width: targetWidth,
+      height: Math.floor(targetWidth * aspectRatio),
+    };
   } catch (err) {
     console.error("Error processing image:", err);
-    return { pixels: [], width: 0, height: 0 };
+    throw err; // Re-throw to handle in the UI
   }
 };
 
@@ -65,8 +87,9 @@ export const getImageData = async (
 const createImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "anonymous"; // Add this if needed for external images
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Failed to load image"));
+    img.onerror = (e) => reject(new Error(`Failed to load image: ${e}`));
     img.src = src;
   });
 };
