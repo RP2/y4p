@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@fontsource/libre-baskerville";
+@import "@fontsource/cutive-mono";
 @theme {
-  --font-sans: "libre-baskerville", "sans-serif";
+  --font-mono: "Cutive Mono", "monospace";
 }
