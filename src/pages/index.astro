@@ -52,10 +52,10 @@ import Layout from "../layouts/Layout.astro";
     const text = cleanText(philosophyText);
 
     // Generate CSS with the pixel data
-    await generateCSS(imageData.pixels, TextStyle.INVERTED);
+    await generateCSS(TextStyle.INVERTED);
 
     // Generate text with indexed spans using the image dimensions
-    const result = await repeatText(text, imageSize);
+    const result = await repeatText(text, imageSize, imageData.pixels);
 
     // Update the container with the generated text
     document.getElementById("textContainer")!.innerHTML = result;

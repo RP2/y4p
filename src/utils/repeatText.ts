@@ -1,8 +1,9 @@
-import type { ImageSize } from "./interfaces";
+import type { ImageSize, Pixel } from "./interfaces";
 
 export const repeatText = async (
   text: string,
   imageSize: ImageSize,
+  pixels: Pixel[], // Add pixels parameter
 ): Promise<string> => {
   const { width, height } = imageSize;
   const requiredLength = width * height;
@@ -15,10 +16,13 @@ export const repeatText = async (
   }
 
   // Pre-compile templates for better performance
-  const makeSpan = (index: number, content: string) =>
-    `<span class="color-${index}">${content}</span>`;
-  const makeSpace = (index: number) =>
-    `<span class="color-${index}">&nbsp;</span>`;
+  const makeSpan = (index: number, content: string) => {
+    const pixel = pixels[index];
+    const { r, g, b } = pixel;
+    return `<span data-px style="--rgb:rgb(${r},${g},${b});--inv:rgb(${255 - r},${255 - g},${255 - b})">${content}</span>`;
+  };
+
+  const makeSpace = (index: number) => makeSpan(index, "&nbsp;");
 
   const words = repeatedText.split(" ");
   const rows: string[] = [];
