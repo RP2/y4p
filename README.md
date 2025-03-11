@@ -1,8 +1,8 @@
-# 🌈 Welcome to My Awesome Project
+# 📝 y4p
 
-This is a simple project that showcases how to use Astro, a modern web framework for building fast and efficient websites.
+Image displayed through text highlighting
 
-## 🧞 Commands
+## 👑 Commands
 
 All commands are run from the root of the project, from a terminal:
 
